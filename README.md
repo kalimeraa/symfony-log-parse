@@ -9,7 +9,7 @@
 ```
   make run
   make enter
-  php bin/console app:parse (yes,no) import logs
+  php bin/console doctrine:migrations:migrate
 ```
 
 ### How to test importing interruption
