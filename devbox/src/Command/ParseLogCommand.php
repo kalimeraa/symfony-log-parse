@@ -53,10 +53,9 @@ class ParseLogCommand extends Command
         ])) {
             throw new InvalidArgumentException('please type only yes or no');
         }
-
-        foreach ($this->readTheLogFile() as $currentLineAndIndex) {
-            try {
-                if ('yes' === $saveLog) {
+        if ('yes' === $saveLog) {
+            foreach ($this->readTheLogFile() as $currentLineAndIndex) {
+                try {
                     $parsedLog = $this->logParser->parse($currentLineAndIndex['content']);
                     $log = new Log();
                     $log->setServiceName($parsedLog['serviceName']);
@@ -65,18 +64,22 @@ class ParseLogCommand extends Command
                     $entityManager = $this->doctrine->getManager();
                     $entityManager->persist($log);
                     $entityManager->flush();
+                } catch (Exception $exception) {
+                    file_put_contents($this->containerBag->get('kernel.logs_dir').'/left_off.txt', $currentLineAndIndex['index']);
+                    dump($exception);
+
+                    return Command::FAILURE;
                 }
-            } catch (Exception $exception) {
-                file_put_contents($this->containerBag->get('kernel.logs_dir').'/left_off.txt', $currentLineAndIndex['index']);
-                dump($exception);
-
-                return Command::FAILURE;
             }
-        }
 
-        $lefOffTxt = $this->containerBag->get('kernel.logs_dir').'/left_off.txt';
-        if (file_exists($lefOffTxt)) {
-            unlink($lefOffTxt);
+            $lefOffTxt = $this->containerBag->get('kernel.logs_dir').'/left_off.txt';
+            if (file_exists($lefOffTxt)) {
+                unlink($lefOffTxt);
+            }
+        } else {
+            foreach ($this->readTheLogFile() as $currentLineAndIndex) {
+                dump($currentLineAndIndex);
+            }
         }
 
         return Command::SUCCESS;
