@@ -1,0 +1,1 @@
+﻿check var/log/logs.txt
